@@ -1,0 +1,3 @@
+*.pyc
+scannerapp/static/img
+scannerapp.wsgi

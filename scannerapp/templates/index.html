@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block style %}
+.glyphicon-refresh-animate {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+{% endblock %}
+
+{% block body_block %}
+
+<h1>Remote Scanner WebGUI</h1>
+      <h3>Easily Scan your Documents / Images from your web-browser</h3>
+      <h5>Software (c) Filip Rec</h5>
+      <hr>
+          <br>
+
+          <form name="settings" action="{{ url_for('scan') }}" method=POST>
+
+            <div class="form-group">
+              <label for="format">Format</label>
+              <select name="format" class="form-control">
+                <option value="jpg" selected>JPEG</option>
+                <option value="png">PNG</option>
+                <option value="tiff">TIFF</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="resolution">Rozdzielczość</label>
+              <input type="number" class="form-control" value="300" max="1200" min="100" name="resolution" maxlength=4 required>
+            </div>            
+            
+            <div class="form-group">
+              <label for="colortype">Typ skanu</label>
+              <select name="colortype" class="form-control">
+               <option value="Lineart">Czarno-biały</option>
+               <option value="Gray">Odcienie szarości</option>
+               <option value="Color" selected>W kolorze</option>
+              </select>
+            <br>
+
+            <div class="form-group">
+              <button type="submit" id="submitbutton" class="btn btn-success" onClick="progressButton()">Skanuj</button>
+              <button type="reset" class="btn btn-danger">Resetuj</button>
+            </div>   
+          </form>
+
+<script>
+function progressButton() {
+
+  document.getElementById("submitbutton").className = "btn btn-lg btn-warning";
+  document.getElementById("submitbutton").innerHTML = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="submitspan"></span> Skanuję...';
+}
+</script>
+
+{% endblock %}
