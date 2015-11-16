@@ -1,3 +1,5 @@
 *.pyc
 scannerapp/static/img
 scannerapp.wsgi
+temp/
+sftp-config.json

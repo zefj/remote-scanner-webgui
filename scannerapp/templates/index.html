@@ -30,15 +30,22 @@
             <div class="form-group">
               <label for="format">Format</label>
               <select name="format" class="form-control">
-                <option value="jpg" selected>JPEG</option>
+                <option value="jpeg" selected>JPEG</option>
                 <option value="png">PNG</option>
-                <option value="tiff">TIFF</option>
+                <option value="tiff" disabled>TIFF (not implemented)</option>
               </select>
             </div>
             <div class="form-group">
               <label for="resolution">Rozdzielczość</label>
-              <input type="number" class="form-control" value="300" max="1200" min="100" name="resolution" maxlength=4 required>
-            </div>            
+              <select name="resolution" class="form-control">
+               <option value="75">75 DPI</option>
+               <option value="100">100 DPI</option>
+               <option value="200">200 DPI</option>
+               <option value="300">300 DPI</option>
+               <option value="600">600 DPI</option>
+               <option value="1200">1200 DPI</option>
+              </select>
+            </div>
             
             <div class="form-group">
               <label for="colortype">Typ skanu</label>
@@ -47,6 +54,15 @@
                <option value="Gray">Odcienie szarości</option>
                <option value="Color" selected>W kolorze</option>
               </select>
+
+            <div class="form-group">
+              <label for="device">Device</label>
+              <select name="device" class="form-control">
+              {% for device in devices %}
+               <option value="{{ device.name }}">{{ device }}</option>
+              {% endfor %}
+              </select>
+
             <br>
 
             <div class="form-group">
@@ -54,6 +70,9 @@
               <button type="reset" class="btn btn-danger">Resetuj</button>
             </div>   
           </form>
+
+
+
 
 <script>
 function progressButton() {

@@ -7,17 +7,40 @@
 {% endblock %}
 
 {% block style %}
-.cropper-example-3 {
-  width: 100%;
+
+.img-container > img {
+  max-width: 100%;
 }
 
-.cropper-example-3 > img {
-  max-width: 100%;
+.cropper-container {
+  position: relative;
+  overflow: hidden;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.cropper-container img {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100%;
+  min-height: 0 !important;
+  max-height: none !important;
+  image-orientation: 0deg !important;
 }
 
 .modal-header {
   overflow-y: false;
   height: 60px;
+}
+
+.docs-cropped .modal-body > canvas {
+  max-width: 100%;
 }
 
 .jumbotron p {
@@ -26,17 +49,25 @@
   font-size: 15px;
 }
 
+.btn-group {
+  padding-bottom: 15px;
+}
+
 {% endblock %}
 
 {% block body_block %}
 
 
-<form name="settings" id="form" action="{{ url_for('get_uncropped') }}" method=POST>
+<form name="settings" action="{{ url_for('get_uncropped') }}" method=POST>
 
             <div class="form-group">
-              <label for="filename">Nazwa pliku</label>
+              <label for="filename">Filename</label> 
+              (only alphanumeric characters and underscores)
+              <div class="input-group">
               <input type="text" class="form-control" name="filename" id="filename" value="Scan" maxlength=8 required>
-              <input type="hidden" name="temp_filename" id="temp_filename" value="{{ temp_filename }}">
+              <div class="input-group-addon">.{{ format }}</div>
+              <input type="hidden" name="temp_filename" value="{{ image }}">
+              </div>
             </div>
             <div class="text-center">
             <div class="btn-group">
@@ -54,25 +85,24 @@
               <span class="glyphicon glyphicon-refresh"></span>
           </button>             
   <button type="button" class="btn btn-primary" id="get-cropped-button" data-toggle="modal" data-target="#canvas-modal">Pobierz wykadrowany</button>        
-
 </div>
-<p><strong>Kadrowanie zmienia format na .PNG (przezroczyste tło).</strong></p> 
+
+
 </div>
 </form>
 
-<div id="cropper-example-3" style="max-height: 1500px;">
-  <img src="img/temp/{{ temp_filename }}" alt="Picture">
+<div class="img-container">
+  <img src="img/temp/{{ image }}" alt="Picture">
 </div>
 
 
-<div class="modal fade" id="canvas-modal">
+<div class="modal fade docs-cropped" id="getCroppedCanvasModal" aria-hidden="true" aria-labelledby="getCroppedCanvasTitle" role="dialog" tabindex="-1" style="display: none;">
 
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title"><a href="#" class="btn btn-primary" id="saveImageAs" download="cropped.png">Zapisz</a></h4>
-              
+              <p>Right mouse button > Save image as...</p>
       </div>
       <div class="modal-body">
           <canvas id="cropped-canvas"></canvas>
@@ -82,22 +112,18 @@
     </div>
   </div>
 </div>
-</div>
-
-
-
-
 
 <script>
-var $image = $('#cropper-example-3 > img')
+var $image = $('.img-container > img')
 
 $image.cropper({
-  autoCropArea: 1,
+  autoCropArea: 0.8,
+  minConainerHeight: 500,
+
 });
 
 
 $(document).ready(function() {
-    
     $('#rotate-left').click(function() {
         $image.cropper("rotate", -45);
       });
@@ -112,40 +138,43 @@ $(document).ready(function() {
 
     $('#get-cropped-button').click(function() {
 
-        $('#canvas-modal').on('shown.bs.modal', function () {
-            $(this).find('.modal-dialog').css({width:width+30,
-                               height:height+80, 
-                              'max-height':'100%'});
-          });
+        result = $image.cropper("getCroppedCanvas");
+        $('#getCroppedCanvasModal').modal().find('.modal-body').html(result);
 
-        cropped_image_size = $image.cropper("getData")
-        width = cropped_image_size.width
-        height = cropped_image_size.height
+        // $('#getCroppedCanvasModal').on('show.bs.modal', function () {
+        //     $(this).find('.modal-dialog').css({height: window_height, 
+        //                       'max-height':'100%'});
+        //   });
 
-        var canvas = document.getElementById("cropped-canvas");
+        // cropped_image_size = $image.cropper("getData")
+        // width = cropped_image_size.width
+        // height = cropped_image_size.height
 
-        canvas.setAttribute('width', width)
-        canvas.setAttribute('height', height)
+        // var canvas = document.getElementById("cropped-canvas");
+        
+        // canvas.setAttribute('width', width)
+        // canvas.setAttribute('height', height)
 
-        var image = $image.cropper('getCroppedCanvas');
-        var ctx = canvas.getContext("2d");
-        ctx.drawImage(image, 0, 0);
+        // var image = $image.cropper('getCroppedCanvas');
+        // var ctx = canvas.getContext("2d");
+        // ctx.drawImage(image, 0, 0);
 
-        var button = document.getElementById('saveImageAs');
-        var filename = document.getElementById("filename").value;
-        button.setAttribute('download', filename+".png")
-        button.addEventListener('click', function (e) {
-        var dataURL = canvas.toDataURL('image/png');
-        button.href = dataURL;
-        });
-    });   
+        // var button = document.getElementById('saveImageAs');
+        // var filename = document.getElementById("filename").value;
+        // button.setAttribute('download', filename+".png")
+        // button.addEventListener('click', function (e) {
+        // var dataURL = canvas.toDataURL('image/png');
+        // button.href = dataURL;
+        // });
+    });  
 
-    // $('#form').submit(function(){
-    //   window.location.href = "{{ url_for('index') }}";
-    //   return false;
-    // })
-  })
+    // $('#get-data-button').click(function() {
+    //   data = $image.cropper("getData", rounded='True');
 
+    //   console.log(JSON.stringify(data));
+    //   $('#data').text( JSON.stringify(data) );
+    // }) 
+});
 
 </script>
 
