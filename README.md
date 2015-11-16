@@ -13,24 +13,23 @@ You are free to deploy this application to whatever webserver you wish. Given th
 
 Example Apache configuration:
 
-```
-<VirtualHost *:80>
-                WSGIDaemonProcess scanner user=www-data group=www-data threads=5
-                WSGIScriptAlias /scanner /var/www/scannerapp/scannerapp.wsgi
-                <Directory /var/www/scannerapp/scannerapp/>
-                        Order allow,deny
-                        Allow from all
-                </Directory>
-                Alias /static /var/www/scannerapp/scannerapp/static
-                <Directory /var/www/scannerapp/scannerapp/static/>
-                        Order allow,deny
-                        Allow from all
-                </Directory>
-                ErrorLog ${APACHE_LOG_DIR}/error.log
-                LogLevel warn
-                CustomLog ${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-```
+    <VirtualHost *:80>
+        WSGIDaemonProcess scanner user=www-data group=www-data threads=5
+        WSGIScriptAlias /scanner /var/www/scannerapp/scannerapp.wsgi
+        <Directory /var/www/scannerapp/scannerapp/>
+                Order allow,deny
+                Allow from all
+        </Directory>
+        Alias /static /var/www/scannerapp/scannerapp/static
+        <Directory /var/www/scannerapp/scannerapp/static/>
+                Order allow,deny
+                Allow from all
+        </Directory>
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        LogLevel warn
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+    </VirtualHost>
+
 
 ## Cron job
 
