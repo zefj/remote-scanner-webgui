@@ -92,7 +92,7 @@
 </form>
 
 <div class="img-container">
-  <img src="img/temp/{{ image }}" alt="Picture">
+  <img src="{{ url_for('static', filename=image) }}" alt="Picture">
 </div>
 
 

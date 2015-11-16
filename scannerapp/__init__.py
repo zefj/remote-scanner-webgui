@@ -52,7 +52,7 @@ def scan():
         temp_dir = getattr(config, 'temp_dir', '/tmp')
 
         if not os.path.exists(temp_dir):
-            os.makedirs(temp_dirs)
+            os.makedirs(temp_dir)
 
         image_path = temp_dir+temp_filename
         print image_path
@@ -62,7 +62,8 @@ def scan():
 
 @app.route('/scantest')
 def ss():
-    return render_template('scantest.html')  
+    temp_filename = "yGa9ZTx2Gu.jpg"
+    return render_template('scantest.html', image=temp_filename)  
 
 @app.route('/get_uncropped', methods=['POST'])
 def get_uncropped():
