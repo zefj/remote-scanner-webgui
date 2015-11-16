@@ -13,7 +13,7 @@ You are free to deploy this application to whatever webserver you wish. Given th
 
 Example Apache configuration:
 
-``
+```
 <VirtualHost *:80>
                 WSGIDaemonProcess scanner user=www-data group=www-data threads=5
                 WSGIScriptAlias /scanner /var/www/scannerapp/scannerapp.wsgi
@@ -30,14 +30,14 @@ Example Apache configuration:
                 LogLevel warn
                 CustomLog ${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
-``
+```
 
 ## Cron job
 
 To make sure you don't run out of disk space, you need to add a Cron job:
 
 ``
-*/30 * * * * find /var/www/scannerapp/scannerapp/static/img/temp/ -type f -amin +30 -delete
+*/30 * * * * find /var/www/scannerapp/scannerapp/static/ -type f -amin +30 -delete
 ``
 
 Please notice the path needs to be customised to whatever your `temp_dir` in `config.py` is. This particular job will run every 30 minutes and delete files last accessed more than 30 minutes ago. 
