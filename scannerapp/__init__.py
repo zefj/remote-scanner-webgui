@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7
 import os
 import config
+import sys
 import random
 import string
 
@@ -23,42 +24,57 @@ def index():
     return render_template('index.html', devices=devices)  
 
 @app.route('/scan', methods=['POST'])
-def scan():
+def scan_view():
     if request.method == 'POST':
-        res = request.form['resolution']
+        resolution = int(request.form['resolution'])
         format = request.form['format']
-        color = request.form['colortype']
+        # mode = request.form['colortype']
+        mode = 'dupa'
         device_choice = request.form['device']
     
         devices = pyinsane.get_devices()
         scanner = [device for device in devices if device_choice in device.name][0]
-        
 
-        scanner.options['resolution'].value = int(res)
-        scanner.options['mode'].value = color
+        image, log = perform_scan(scanner, resolution=resolution, mode=mode)
 
-        scan_session = scanner.scan(multiple=False)
+        if image:
+            temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10)) + '.' + format
+            temp_dir = getattr(config, 'temp_dir', '/tmp')
 
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dirs)
+
+            image_path = temp_dir+temp_filename
+            image.save(image_path, quality=100)
+            return render_template('scan.html', image=temp_filename, format=format)
+        else:
+            return render_template('scan_failed.html', error = log)
+
+    
+
+def perform_scan(scanner, **kwargs):
+    
+    error = None
+    
+    if scanner:
         try:
+            for key, value in kwargs.iteritems():
+                scanner.options[key].value = value
+
+            scan_session = scanner.scan(multiple=False)
+            
             while True:
                 scan_session.scan.read()
+
         except EOFError:
-            pass    
+            error = str(sys.exc_info()[1])
 
-        image = scan_session.images[0]
-        context = {}
+        return scan_session.images[0], error
+    
+    else:
+        error = 'No scanner detected.'
+        return None, error
 
-        temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10)) + '.' + format
-        temp_dir = getattr(config, 'temp_dir', '/tmp')
-
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dirs)
-
-        image_path = temp_dir+temp_filename
-        print image_path
-        image.save(image_path, quality=100)
-
-    return render_template('scan.html', image=temp_filename, format=format)
 
 @app.route('/scantest')
 def ss():
