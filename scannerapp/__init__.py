@@ -3,23 +3,37 @@ import os
 import sys
 import random
 import string
+import json
 
 import pyinsane.abstract as pyinsane
 from pyinsane.rawapi import SaneException
 from PIL import Image
-from flask import Flask, render_template, request, flash, url_for, send_file
+from flask import Flask, render_template, request, flash, url_for, send_file, jsonify
 
 import config
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = 'some_secret'
-  
+
+@app.route('/list_devices')
+def list_devices():
+
+    devices = {}
+
+    for device in pyinsane.get_devices():
+
+        devices[str(device)] = {}
+        d = devices[str(device)]
+
+        for opt in device.options.values():
+                d[opt.name] = opt.constraint
+
+    return jsonify(**devices)
+
 @app.route('/')
 def index():
 
-    devices = pyinsane.get_devices()
-
-    return render_template('index.html', devices=devices)  
+    return render_template('index.html')  
 
 @app.route('/scan', methods=['POST'])
 def scan_view():
@@ -28,11 +42,11 @@ def scan_view():
 
         resolution = int(request.form['resolution'])
         format = request.form['format']
-        mode = request.form['colortype']
+        mode = request.form['mode']
         device_choice = request.form['device']
     
         devices = pyinsane.get_devices()
-        scanner = [device for device in devices if device_choice in device.name][0]
+        scanner = [device for device in devices if device.name in device_choice][0]
 
         image, log = perform_scan(scanner, resolution=resolution, mode=mode)
 
@@ -52,8 +66,6 @@ def scan_view():
         else:
 
             return render_template('scan_failed.html', error = log)
-
-    
 
 def perform_scan(scanner, **kwargs):
 

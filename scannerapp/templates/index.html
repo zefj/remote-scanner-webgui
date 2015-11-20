@@ -15,6 +15,11 @@
     from { transform: scale(1) rotate(0deg);}
     to { transform: scale(1) rotate(360deg);}
 }
+
+#select-device {
+  font-weight: bolder;
+}
+
 {% endblock %}
 
 {% block body_block %}
@@ -28,69 +33,118 @@
           <form name="settings" id="settings" action="{{ url_for('scan_view') }}" method=POST>
 
             <div class="form-group">
+              <label for="device">Device</label>
+              <select name="device" id="select-device" class="form-control" required>
+              <option>Wait for your devices to load!</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="format">Format</label>
-              <select name="format" class="form-control">
+              <select name="format" id="select-format" class="form-control">
                 <option value="jpeg" selected>JPEG</option>
                 <option value="png">PNG</option>
                 <option value="tiff" disabled>TIFF (not implemented)</option>
               </select>
             </div>
+
             <div class="form-group">
-              <label for="resolution">Rozdzielczość</label>
-              <select name="resolution" class="form-control">
-               <option value="75">75 DPI</option>
-               <option value="100">100 DPI</option>
-               <option value="200">200 DPI</option>
-               <option value="300">300 DPI</option>
-               <option value="600">600 DPI</option>
-               <option value="1200">1200 DPI</option>
+              <label for="resolution">Resolution</label>
+              <select name="resolution" id="select-resolution" class="form-control">
               </select>
             </div>
             
             <div class="form-group">
-              <label for="colortype">Typ skanu</label>
-              <select name="colortype" class="form-control">
-               <option value="Lineart">Czarno-biały</option>
-               <option value="Gray">Odcienie szarości</option>
-               <option value="Color" selected>W kolorze</option>
+              <label for="mode">Color mode</label>
+              <select name="mode" id="select-mode" class="form-control">
               </select>
+            </div>
 
             <div class="form-group">
-              <label for="device">Device</label>
-              <select name="device" class="form-control" required>
-              {% for device in devices %}
-               <option value="{{ device.name }}">{{ device }}</option>
-              {% endfor %}
-              </select>
-
-            <br>
-
-            <div class="form-group">
-              <button type="submit" id="submitbutton" class="btn btn-success">Skanuj</button>
-              <button type="reset" class="btn btn-danger">Resetuj</button>
+              <button type="submit" id="submitbutton" class="btn btn-lg btn-success">Scan</button>
             </div>   
           </form>
 
 <script>
 
-$.fn.isValid = function(){
-    console.log(this[0].checkValidity())
-    return this[0].checkValidity()
-}
+// $.fn.isValid = function(){
+//     console.log(this[0].checkValidity())
+//     return this[0].checkValidity()
+// }
+
+var devices
 
 $(document).ready(function () {
-    var intputElements = document.getElementsByTagName("select");
-    for (var i = 0; i < intputElements.length; i++) {
-        intputElements[i].oninvalid = function (e) {
-            e.target.setCustomValidity("");
-            if (!e.target.validity.valid) {
-                if (e.target.name == "device") {
-                    e.target.setCustomValidity("The field 'Device' cannot be left blank, make sure your scanner is connected and visible by running 'scanimage -L' from your command line.");
-                }
-            };
-        };
-    };
+    // var intputElements = document.getElementsByTagName("select");
+    // for (var i = 0; i < intputElements.length; i++) {
+    //     intputElements[i].oninvalid = function (e) {
+    //         e.target.setCustomValidity("");
+    //         if (!e.target.validity.valid) {
+    //             if (e.target.name == "device") {
+    //                 e.target.setCustomValidity("The field 'Device' cannot be left blank, make sure your scanner is connected and visible by running 'scanimage -L' from your command line.");
+    //             }
+    //         };
+    //     };
+    // };
+
+  $.ajax({
+    dataType: "json",
+    url: "list_devices",
+    success: function(result) {
+      devices = result
+
+      $("#select-device").empty().css("font-weight", "normal");
+      $.each(result, function(key, value) {
+        $("#select-device").append($("<option></option>").attr("value", key).text(key));
+      })
+
+      // Initial form fill
+      var values = devices[$("#select-device").val()]
+      
+      $( "select" ).not( "#select-device, #select-format" ).each(function() {
+        $(this).empty();
+        var select_name = $(this).attr('name');
+        var select_id = $(this).attr('id');
+        var select_values = values[select_name];
+
+        $.each(select_values, function(key, value) {
+          if (select_id == "select-resolution") {
+            $("#"+select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
+          }
+          else {
+            $("#"+select_id).append($("<option></option>").attr("value", value).text(value));        
+          }
+        });
+      });
+    },
+    error: function() {
+      $("#select-device").empty().css("background-color", "#c9302c").css("color", "white").append($("<option></option>").text("Failed to load devices, make sure your scanner is connected and visible by running 'scanimage -L' from your command line."));
+      $("#submitbutton").attr("disabled", "disabled");
+    }
+  });
+});
+
+// Form fill on device change
+$("#select-device").change(function () {
+  var values = devices[$(this).val()]
+
+  $( "select" ).not( "#select-device, #select-format" ).each(function() {
+    $(this).empty();
+    var select_name = $(this).attr('name');
+    var select_id = $(this).attr('id');
+    var select_values = values[select_name];
+    
+    $.each(select_values, function(key, value) {
+      if (select_id == "select-resolution") {
+        $("#"+select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
+      }
+      else {
+        $("#"+select_id).append($("<option></option>").attr("value", value).text(value));        
+      }
+    });
+  })
 })
+
 
 $('#settings').submit(function (event){
     if ($('#settings').isValid()) {   
