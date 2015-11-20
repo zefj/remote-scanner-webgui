@@ -61,7 +61,7 @@
             </div>
 
             <div class="form-group">
-              <button type="submit" id="submitbutton" class="btn btn-lg btn-success">Scan</button>
+              <button type="submit" id="submitbutton" class="btn btn-lg btn-success" disabled>Scan</button>
             </div>   
           </form>
 
@@ -92,7 +92,7 @@ $(document).ready(function () {
     url: "list_devices",
     success: function(result) {
       devices = result
-
+      $("#submitbutton").removeAttr("disabled");
       $("#select-device").empty().css("font-weight", "normal");
       $.each(result, function(key, value) {
         $("#select-device").append($("<option></option>").attr("value", key).text(key));
