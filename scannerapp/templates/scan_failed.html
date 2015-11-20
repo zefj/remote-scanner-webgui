@@ -1,22 +1,5 @@
 {% extends "base.html" %}
 
-{% block style %}
-.glyphicon-refresh-animate {
-    -animation: spin .7s infinite linear;
-    -webkit-animation: spin2 .7s infinite linear;
-}
-
-@-webkit-keyframes spin2 {
-    from { -webkit-transform: rotate(0deg);}
-    to { -webkit-transform: rotate(360deg);}
-}
-
-@keyframes spin {
-    from { transform: scale(1) rotate(0deg);}
-    to { transform: scale(1) rotate(360deg);}
-}
-{% endblock %}
-
 {% block body_block %}
 
 <h1>Remote Scanner WebGUI</h1>
@@ -24,8 +7,8 @@
       <h5>Software (c) Filip Rec</h5>
       <hr>
           <br>
-<h1>Scan failed!</h1>
-<h3>Error log:<h3>
+<h2>Scan failed!</h2>
+<h4>Error:<h4>
 <p>{{ error }}</p>
 
 {% endblock %}
