@@ -1,16 +1,15 @@
 #!/usr/bin/python2.7
 import os
-import config
+import sys
 import random
 import string
 
 import pyinsane.abstract as pyinsane
-
+from pyinsane.rawapi import SaneException
 from PIL import Image
-
 from flask import Flask, render_template, request, flash, url_for, send_file
 
-#from wsgiref.util import FileWrapper
+import config
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = 'some_secret'
@@ -23,47 +22,66 @@ def index():
     return render_template('index.html', devices=devices)  
 
 @app.route('/scan', methods=['POST'])
-def scan():
+def scan_view():
+
     if request.method == 'POST':
-        res = request.form['resolution']
+
+        resolution = int(request.form['resolution'])
         format = request.form['format']
-        color = request.form['colortype']
+        mode = request.form['colortype']
         device_choice = request.form['device']
     
         devices = pyinsane.get_devices()
         scanner = [device for device in devices if device_choice in device.name][0]
-        
 
-        scanner.options['resolution'].value = int(res)
-        scanner.options['mode'].value = color
+        image, log = perform_scan(scanner, resolution=resolution, mode=mode)
 
-        scan_session = scanner.scan(multiple=False)
+        if image:
 
+            temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10)) + '.' + format
+            temp_dir = getattr(config, 'temp_dir', '/tmp')
+
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dirs)
+
+            image_path = temp_dir+temp_filename
+            image.save(image_path, quality=100)
+
+            return render_template('scan.html', image=temp_filename, format=format)
+
+        else:
+
+            return render_template('scan_failed.html', error = log)
+
+
+
+def perform_scan(scanner, **kwargs):
+
+    error = None
+
+    if scanner:
         try:
-            while True:
-                scan_session.scan.read()
-        except EOFError:
-            pass    
+            for key, val in kwargs.iteritems():
+                scanner.options[key].value = val
 
-        image = scan_session.images[0]
-        context = {}
+            scan_session = scanner.scan(multiple=False)
 
-        temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10)) + '.' + format
-        temp_dir = getattr(config, 'temp_dir', '/tmp')
+            try:
+                while True:
+                    scan_session.scan.read()
+            except EOFError:
+                pass
 
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
+            return scan_session.images[0], None
 
-        image_path = temp_dir+temp_filename
-        print image_path
-        image.save(image_path, quality=100)
+        except SaneException:
+            error = str(sys.exc_info()[1])
+            return None, error
+    
+    else:
+        error = 'No scanner detected.'
+        return None, error
 
-    return render_template('scan.html', image=temp_filename, format=format)
-
-@app.route('/scantest')
-def ss():
-    temp_filename = "yGa9ZTx2Gu.jpg"
-    return render_template('scantest.html', image=temp_filename)  
 
 @app.route('/get_uncropped', methods=['POST'])
 def get_uncropped():
@@ -81,7 +99,10 @@ def get_uncropped():
 
         return send_file(path_to_file, as_attachment=True, attachment_filename=filename)
 
+@app.route('/scantest')
+def ss():
+    
+    return render_template('scantest.html')  
+
 if __name__ == "__main__":
-        app.run(host='0.0.0.0', port=8000)
-
-
+        app.run(host='0.0.0.0', port=8000, debug=False)

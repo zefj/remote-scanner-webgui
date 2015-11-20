@@ -25,7 +25,7 @@
       <hr>
           <br>
 
-          <form name="settings" action="{{ url_for('scan') }}" method=POST>
+          <form name="settings" id="settings" action="{{ url_for('scan_view') }}" method=POST>
 
             <div class="form-group">
               <label for="format">Format</label>
@@ -57,7 +57,7 @@
 
             <div class="form-group">
               <label for="device">Device</label>
-              <select name="device" class="form-control">
+              <select name="device" class="form-control" required>
               {% for device in devices %}
                <option value="{{ device.name }}">{{ device }}</option>
               {% endfor %}
@@ -66,20 +66,39 @@
             <br>
 
             <div class="form-group">
-              <button type="submit" id="submitbutton" class="btn btn-success" onClick="progressButton()">Skanuj</button>
+              <button type="submit" id="submitbutton" class="btn btn-success">Skanuj</button>
               <button type="reset" class="btn btn-danger">Resetuj</button>
             </div>   
           </form>
 
-
-
-
 <script>
-function progressButton() {
 
-  document.getElementById("submitbutton").className = "btn btn-lg btn-warning";
-  document.getElementById("submitbutton").innerHTML = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="submitspan"></span> Skanuję...';
+$.fn.isValid = function(){
+    console.log(this[0].checkValidity())
+    return this[0].checkValidity()
 }
+
+$(document).ready(function () {
+    var intputElements = document.getElementsByTagName("select");
+    for (var i = 0; i < intputElements.length; i++) {
+        intputElements[i].oninvalid = function (e) {
+            e.target.setCustomValidity("");
+            if (!e.target.validity.valid) {
+                if (e.target.name == "device") {
+                    e.target.setCustomValidity("The field 'Device' cannot be left blank, make sure your scanner is connected and visible by running 'scanimage -L' from your command line.");
+                }
+            };
+        };
+    };
+})
+
+$('#settings').submit(function (event){
+    if ($('#settings').isValid()) {   
+        document.getElementById("submitbutton").className = "btn btn-lg btn-warning";
+        document.getElementById("submitbutton").innerHTML = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="submitspan"></span> Scanning...';
+    };
+});
 </script>
+
 
 {% endblock %}
