@@ -8,13 +8,17 @@ import json
 import pyinsane.abstract as pyinsane
 from pyinsane.rawapi import SaneException
 from PIL import Image
-from flask import Flask, render_template, request, flash, url_for, send_file, jsonify
+from flask import Flask, render_template, request, flash, url_for, send_file, jsonify, abort, make_response
 
 import config
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = 'some_secret'
 
+
+"""
+API endpoint for listing available devices. This returns a JSON object with all the devices that, in theory, 'scanimage -L' would recognize. If failed, check your permissions.
+"""
 @app.route('/list_devices')
 def list_devices():
 
@@ -27,6 +31,9 @@ def list_devices():
 
         for opt in device.options.values():
                 d[opt.name] = opt.constraint
+
+    if len(devices) == 0:
+        return make_response(jsonify({'error': 'No devices found'}), 200)
 
     return jsonify(**devices)
 

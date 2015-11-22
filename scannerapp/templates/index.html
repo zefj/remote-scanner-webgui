@@ -66,15 +66,14 @@
           </form>
 
 <script>
-
-$.fn.isValid = function(){
+$.fn.isValid = function() {
     console.log(this[0].checkValidity())
     return this[0].checkValidity()
 }
 
 var devices
 
-$(document).ready(function () {
+$(document).ready(function() {
     // var intputElements = document.getElementsByTagName("select");
     // for (var i = 0; i < intputElements.length; i++) {
     //     intputElements[i].oninvalid = function (e) {
@@ -87,72 +86,75 @@ $(document).ready(function () {
     //     };
     // };
 
-  $.ajax({
-    dataType: "json",
-    url: "list_devices",
-    success: function(result) {
-      devices = result
-      $("#submitbutton").removeAttr("disabled");
-      $("#select-device").empty().css("font-weight", "normal");
-      $.each(result, function(key, value) {
-        $("#select-device").append($("<option></option>").attr("value", key).text(key));
-      })
+    $.ajax({
+        dataType: "json",
+        url: "list_devices",
+        success: function(result) {
 
-      // Initial form fill
-      var values = devices[$("#select-device").val()]
-      
-      $( "select" ).not( "#select-device, #select-format" ).each(function() {
+            if (result.hasOwnProperty('error')) {
+                $("#select-device").empty().css("background-color", "#c9302c").css("color", "white").append($("<option></option>").text("Failed to load devices, make sure your scanner is connected and visible by running 'scanimage -L' from your command line."));
+                $("#submitbutton").attr("disabled", "disabled");
+            } else {
+                devices = result
+                $("#submitbutton").removeAttr("disabled");
+                $("#select-device").empty().css("font-weight", "normal");
+
+                $.each(result, function(key, value) {
+                    $("#select-device").append($("<option></option>").attr("value", key).text(key));
+                })
+
+                // Initial form fill
+                var values = devices[$("#select-device").val()]
+
+                $("select").not("#select-device, #select-format").each(function() {
+                    $(this).empty();
+                    var select_name = $(this).attr('name');
+                    var select_id = $(this).attr('id');
+                    var select_values = values[select_name];
+
+                    $.each(select_values, function(key, value) {
+                        if (select_id == "select-resolution") {
+                            $("#" + select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
+                        } else {
+                            $("#" + select_id).append($("<option></option>").attr("value", value).text(value));
+                        }
+                    });
+                });
+            }
+        },
+        error: function(result) {
+            $("#select-device").empty().css("background-color", "#c9302c").css("color", "white").append($("<option></option>").text("There is something wrong with the connection."));
+            $("#submitbutton").attr("disabled", "disabled");
+        }
+    });
+});
+
+// Form fill on device change
+$("#select-device").change(function() {
+    var values = devices[$(this).val()]
+
+    $("select").not("#select-device, #select-format").each(function() {
         $(this).empty();
         var select_name = $(this).attr('name');
         var select_id = $(this).attr('id');
         var select_values = values[select_name];
 
         $.each(select_values, function(key, value) {
-          if (select_id == "select-resolution") {
-            $("#"+select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
-          }
-          else {
-            $("#"+select_id).append($("<option></option>").attr("value", value).text(value));        
-          }
+            if (select_id == "select-resolution") {
+                $("#" + select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
+            } else {
+                $("#" + select_id).append($("<option></option>").attr("value", value).text(value));
+            }
         });
-      });
-    },
-    error: function() {
-      $("#select-device").empty().css("background-color", "#c9302c").css("color", "white").append($("<option></option>").text("Failed to load devices, make sure your scanner is connected and visible by running 'scanimage -L' from your command line."));
-      $("#submitbutton").attr("disabled", "disabled");
-    }
-  });
-});
-
-// Form fill on device change
-$("#select-device").change(function () {
-  var values = devices[$(this).val()]
-
-  $( "select" ).not( "#select-device, #select-format" ).each(function() {
-    $(this).empty();
-    var select_name = $(this).attr('name');
-    var select_id = $(this).attr('id');
-    var select_values = values[select_name];
-    
-    $.each(select_values, function(key, value) {
-      if (select_id == "select-resolution") {
-        $("#"+select_id).append($("<option></option>").attr("value", value).text(value + " DPI"));
-      }
-      else {
-        $("#"+select_id).append($("<option></option>").attr("value", value).text(value));        
-      }
-    });
-  })
+    })
 })
 
 
-$('#settings').submit(function (event){
+$('#settings').submit(function(event) {
     if ($('#settings').isValid()) {
         $("#submitbutton").removeClass("btn-success").addClass("btn-warning").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="submitspan"></span> Scanning...');
-        // document.getElementById("submitbutton").className = "btn btn-lg btn-warning";
-        // document.getElementById("submitbutton").innerHTML = '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="submitspan"></span> Scanning...';
     };
-});
+}); 
 </script>
 
 
