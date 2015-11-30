@@ -58,7 +58,7 @@
 {% block body_block %}
 
 
-<form name="settings" action="#" method=POST>
+<form name="settings" action="{{ url_for('get_uncropped') }}" method=POST>
 
             <div class="form-group">
               <label for="filename">Filename</label> 
@@ -93,7 +93,7 @@
 </form>
 
 <div class="img-container">
-  <img src="img/temp/yGa9ZTx2Gu.jpg" alt="Picture">
+  <img src="{{ url_for('static', filename=image) }}" alt="Picture">
 </div>
 
 <div class="modal fade docs-cropped" id="getCroppedCanvasModal" aria-hidden="true" aria-labelledby="getCroppedCanvasTitle" role="dialog" tabindex="-1" style="display: none;">
