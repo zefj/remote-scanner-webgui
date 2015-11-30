@@ -9,12 +9,52 @@ import pyinsane.abstract as pyinsane
 from pyinsane.rawapi import SaneException
 from PIL import Image
 from flask import Flask, render_template, request, flash, url_for, send_file, jsonify, abort, make_response
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import _W, _H
 
 import config
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = 'some_secret'
+temp_dir = getattr(config, 'temp_dir', '/tmp')
 
+def perform_scan(scanner, **kwargs):
+
+    error = None
+
+    if scanner:
+        try:
+            for key, val in kwargs.iteritems():
+                scanner.options[key].value = val
+
+            scan_session = scanner.scan(multiple=False)
+
+            try:
+                while True:
+                    scan_session.scan.read()
+            except EOFError:
+                pass
+
+            return scan_session.images[0], None
+
+        except SaneException:
+            error = str(sys.exc_info()[1])
+            return None, error
+    
+    else:
+        error = 'No scanner detected.'
+        return None, error
+
+def create_pdf(temp_filename, filename):
+
+    c = canvas.Canvas(temp_dir + filename)
+    image = Image.open(temp_dir + temp_filename)
+    width, height = c.drawInlineImage(image, 0, 0, width = _W, height = _H, preserveAspectRatio=True)
+    c.setPageSize((width, height))
+    c.showPage()
+    c.save()
+
+    return filename
 
 """
 API endpoint for listing available devices. This returns a JSON object with all the devices that, in theory, 'scanimage -L' would recognize. If failed, check your permissions.
@@ -57,71 +97,42 @@ def scan_view():
 
         image, log = perform_scan(scanner, resolution=resolution, mode=mode)
 
-        if image:
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
 
-            temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10)) + '.' + format
-            temp_dir = getattr(config, 'temp_dir', '/tmp')
+        temp_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(10))
 
-            if not os.path.exists(temp_dir):
-                os.makedirs(temp_dirs)
+        """
+        If PDF is the desired output extension, save temporarily as jpeg to allow display 
+        """
+        if image and format != 'pdf':
+            temp_filename = temp_filename + '.' + format
 
-            image_path = temp_dir+temp_filename
-            image.save(image_path, quality=100)
-
-            return render_template('scan.html', image=temp_filename, format=format)
+        elif image and format == 'pdf':
+            temp_filename = temp_filename+ '.jpeg'
 
         else:
-
             return render_template('scan_failed.html', error = log)
 
-def perform_scan(scanner, **kwargs):
+        image.save(temp_dir+temp_filename, quality=100)
 
-    error = None
+        return render_template('scan.html', image=temp_filename, format=format)  
 
-    if scanner:
-        try:
-            for key, val in kwargs.iteritems():
-                scanner.options[key].value = val
-
-            scan_session = scanner.scan(multiple=False)
-
-            try:
-                while True:
-                    scan_session.scan.read()
-            except EOFError:
-                pass
-
-            return scan_session.images[0], None
-
-        except SaneException:
-            error = str(sys.exc_info()[1])
-            return None, error
-    
-    else:
-        error = 'No scanner detected.'
-        return None, error
-
-
-@app.route('/get_uncropped', methods=['POST'])
-def get_uncropped():
+@app.route('/get_uncropped?<string:temp_filename>&<string:format>', methods=['POST'])
+def get_uncropped(format, temp_filename):
     
     if request.method == 'POST':
         import re, string
 
         pattern = re.compile('[\W]+')
+        filename = pattern.sub('', request.form['filename']) + "." + format
 
-        temp_filename = request.form['temp_filename']
-        filename = pattern.sub('', request.form['filename']) + "." + temp_filename.split('.', 1)[-1]
-        temp_dir = getattr(config, 'temp_dir', '/tmp')
+        if format == 'pdf':
+            temp_filename = create_pdf(temp_filename, filename)
 
         path_to_file = temp_dir + temp_filename
 
         return send_file(path_to_file, as_attachment=True, attachment_filename=filename)
-
-@app.route('/scantest')
-def ss():
-    
-    return render_template('scantest.html')  
 
 if __name__ == "__main__":
         app.run(host='0.0.0.0', port=8000, debug=False)

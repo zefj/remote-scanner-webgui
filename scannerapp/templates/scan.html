@@ -58,7 +58,7 @@
 {% block body_block %}
 
 
-<form name="settings" action="{{ url_for('get_uncropped') }}" method=POST>
+<form name="settings" action="{{ url_for('get_uncropped', format=format, temp_filename=image) }}" method=POST>
 
             <div class="form-group">
               <label for="filename">Filename</label> 
@@ -66,7 +66,7 @@
               <div class="input-group">
               <input type="text" class="form-control" name="filename" id="filename" value="Scan" maxlength=8 required>
               <div class="input-group-addon">.{{ format }}</div>
-              <input type="hidden" name="temp_filename" value="{{ image }}">
+
               </div>
             </div>
             <div class="text-center">
@@ -124,6 +124,11 @@ $image.cropper({
 
 
 $(document).ready(function() {
+    // temporary, saving cropped to pdf not implemented
+    if ($( ".input-group-addon" ).html() == '.pdf') {
+      $('#rotate-left, #rotate-right, #get-cropped-button').attr("disabled", "disabled");
+    }
+
     $('#rotate-left').click(function() {
         $image.cropper("rotate", -45);
       });
@@ -177,5 +182,4 @@ $(document).ready(function() {
 });
 
 </script>
-
 {% endblock %}
