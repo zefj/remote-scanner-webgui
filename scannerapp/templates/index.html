@@ -66,6 +66,17 @@
             </div>   
           </form>
 
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+    <h3>An error occured:</h3>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <script>
 $.fn.isValid = function() {
     console.log(this[0].checkValidity())
